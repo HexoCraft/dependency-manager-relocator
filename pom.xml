@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Artifact properties -->
+    <groupId>com.github.hexocraft.lib</groupId>
+    <artifactId>DependencyManagerRelocator</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <!-- Description -->
+    <name>Dependency Manager Relocator</name>
+    <description>Java dependency manager relocator.</description>
+    <url>https://github.com/hexocraft-lib/dependency-manager-relocator</url>
+
+    <!-- Organization -->
+    <organization>
+        <name>Hexocraft</name>
+        <url>https://github.com/hexocraft</url>
+    </organization>
+
+    <!-- Want to contibute? Anybody is welcome -->
+    <developers>
+        <developer>
+            <id>hexosse</id>
+            <name>hexosse</name>
+            <url>https://github.com/hexosse</url>
+        </developer>
+    </developers>
+
+    <!-- License -->
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+            <url>https://www.opensource.org/licenses/Apache-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <!-- Source control manager -->
+    <scm>
+        <url>http://github.com/hexocraft-lib/dependency-manager-relocator</url>
+        <connection>scm:git:git://github.com/hexocraft-lib/dependency-manager-relocator.git</connection>
+        <developerConnection>scm:git:git@github.com:hexocraft-lib/dependency-manager-relocator.git</developerConnection>
+    </scm>
+
+    <!-- Issue management -->
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/hexocraft-lib/dependency-manager-relocator/issues</url>
+    </issueManagement>
+
+    <!-- Jenkins server -->
+    <ciManagement>
+        <system>Jenkins</system>
+        <url>http://jenkins.hexocube.fr/job/hexocraft-lib/job/dependency-manager-relocator</url>
+    </ciManagement>
+
+    <!-- Project properties -->
+    <properties>
+        <!-- Use java 1.8 everywhere -->
+        <jdk.version>1.8</jdk.version>
+        <maven.compiler.source>${jdk.version}</maven.compiler.source>
+        <maven.compiler.target>${jdk.version}</maven.compiler.target>
+
+        <!-- Source code and resources must be encoded in UTF-8 -->
+        <project.encoding>UTF-8</project.encoding>
+        <project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>
+
+        <!-- Maven Plugins -->
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
+        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
+
+        <!-- dependencies version -->
+        <junit.jupiter.version>5.7.0</junit.jupiter.version>                            <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+    </properties>
+
+
+    <!-- HexoCraft artifactory repository should have all needed artifacts to build the libs -->
+    <repositories>
+        <repository>
+            <id>hexocraft-repo-release</id>
+            <url>http://repo.hexocube.fr/release</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>hexocraft-repo-snapshot</id>
+            <url>http://repo.hexocube.fr/snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>hexocraft-repo-release</id>
+            <url>http://repo.hexocube.fr/release</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>hexocraft-repo-snapshot</id>
+            <snapshots />
+            <url>http://repo.hexocube.fr/snapshot</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <!-- Project dependencies -->
+    <dependencies>
+        <!-- JUnit 5 -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+
+    <!-- Build options -->
+    <build>
+        <!-- Basics -->
+        <defaultGoal>clean package</defaultGoal>
+
+        <plugins>
+            <!-- Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <!-- Force source and target -->
+                    <source>${jdk.version}</source>
+                    <target>${jdk.version}</target>
+                    <encoding>${project.encoding}</encoding>
+                    <!-- Increase the numbers of errors or warning to display -->
+                    <compilerArguments>
+                        <Xmaxerrs>10000</Xmaxerrs>
+                        <Xmaxwarns>10000</Xmaxwarns>
+                    </compilerArguments>
+                    <!-- Extra configuration -->
+                    <compilerArgument>-Xlint:all</compilerArgument>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+
+            <!-- Surfire -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
