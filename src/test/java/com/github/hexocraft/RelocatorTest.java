@@ -1,4 +1,4 @@
-package com.github.hexocraft.lib;
+package com.github.hexocraft;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -15,6 +15,11 @@ class RelocatorTest {
 
     @BeforeAll
     static void init() {
+        // Restore default values
+        DMRelocator.forceDownload = false;
+        DMRelocator.forceRelocate = false;
+        DMRelocator.flattenDownloadDir = false;
+        DMRelocator.flattenRelocateDir = false;
     }
 
     @AfterAll
@@ -24,8 +29,10 @@ class RelocatorTest {
     @Test
     void Relocate() {
         Assertions.assertDoesNotThrow(() -> {
-            DMRelocator.forceDownload = false;
+            DMRelocator.forceDownload = true;
             DMRelocator.forceRelocate = true;
+            DMRelocator.flattenDownloadDir = false;
+            DMRelocator.flattenRelocateDir = true;
 
             DMRelocator.Relocator(RelocatorTest.class.getClassLoader())
                     .cacheDir(cacheDir)

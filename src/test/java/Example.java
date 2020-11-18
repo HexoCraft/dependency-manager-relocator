@@ -1,6 +1,6 @@
-import com.github.hexocraft.lib.DMRelocator;
-import com.github.hexocraft.lib.DMRelocator.Artifact;
-import com.github.hexocraft.lib.DMRelocator.Relocation;
+import com.github.hexocraft.DMRelocator;
+import com.github.hexocraft.DMRelocator.Artifact;
+import com.github.hexocraft.DMRelocator.Relocation;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,7 +25,7 @@ public class Example {
                     // The folder which will contains downloaded dependencies
                     .cacheDir(cacheDir)
                     // (default to false)
-                    .useFlatDir(true)
+                    .useFlatDir(true, false)
                     // (default to false)
                     .forceDownload(true)
                     // (default to false)

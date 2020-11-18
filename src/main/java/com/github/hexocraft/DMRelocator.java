@@ -1,4 +1,4 @@
-package com.github.hexocraft.lib;
+package com.github.hexocraft;
 
 /**
  * Copyright 2020 hexosse <hexosse@gmail.com>
@@ -59,8 +59,10 @@ public class DMRelocator {
     // Default jar relocator version
     private Artifact jarRelocatorArtifact = new Artifact("me.lucko", "jar-relocator", "1.4");
 
-    // Hierarchy tree will not be preserved while downloading and relocating
-    protected static boolean useFlatDir = false;
+    // Hierarchy tree will not be preserved while downloading
+    protected static boolean flattenDownloadDir = false;
+    // Hierarchy tree will not be preserved while relocating
+    protected static boolean flattenRelocateDir = false;
     // Existing file will removed and downloaded
     protected static boolean forceDownload = false;
     // Existing file will removed and relocated
@@ -142,8 +144,19 @@ public class DMRelocator {
      * Hierarchy tree will not be preserved while downloading and relocating
      * (Default to false)
      */
-    public DMRelocator useFlatDir(Boolean flatDir) {
-        DMRelocator.useFlatDir = flatDir;
+    public DMRelocator useFlatDir(Boolean flatten) {
+        DMRelocator.flattenDownloadDir = flatten;
+        DMRelocator.flattenRelocateDir = flatten;
+        return this;
+    }
+
+    /**
+     * Hierarchy tree will not be preserved while downloading and relocating
+     * (Default to false)
+     */
+    public DMRelocator useFlatDir(Boolean flattenDownloadDir, Boolean flattenRelocateDir) {
+        DMRelocator.flattenDownloadDir = flattenDownloadDir;
+        DMRelocator.flattenRelocateDir = flattenRelocateDir;
         return this;
     }
 
@@ -283,9 +296,9 @@ public class DMRelocator {
 
         // Inject DMRelocator dependencies
         // (asm, asm-commons and jar-relocator)
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmArtifact.toPath()).toFile());
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmCommonsArtifact.toPath()).toFile());
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(jarRelocatorArtifact.toPath()).toFile());
+        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmArtifact.toPath(flattenDownloadDir)).toFile());
+        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmCommonsArtifact.toPath(flattenDownloadDir)).toFile());
+        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(jarRelocatorArtifact.toPath(flattenDownloadDir)).toFile());
 
         // Relocate and inject dependencies
         for (Artifact artifact : artifacts) {
@@ -405,20 +418,27 @@ public class DMRelocator {
         }
 
         public File toFile() {
-            if (DMRelocator.useFlatDir) {
-                return Paths.get(name() + ".jar")
-                        .toFile();
+            return Paths.get(groupId.replace(".", "/"))
+                    .resolve(artifactId.replace(".", "/"))
+                    .resolve(version)
+                    .resolve(name() + ".jar")
+                    .toFile();
+        }
+
+        public File toFile(boolean flatten) {
+            if (flatten) {
+                return Paths.get(name() + ".jar").toFile();
             } else {
-                return Paths.get(groupId.replace(".", "/"))
-                        .resolve(artifactId.replace(".", "/"))
-                        .resolve(version)
-                        .resolve(name() + ".jar")
-                        .toFile();
+                return  toFile();
             }
         }
 
         public Path toPath() {
             return toFile().toPath();
+        }
+
+        public Path toPath(boolean flatten) {
+            return toFile(flatten).toPath();
         }
 
         public URL toURL(URL root) throws RuntimeException {
@@ -569,7 +589,7 @@ public class DMRelocator {
             Objects.requireNonNull(output, "output cannot be null.");
 
             // Output file to download to
-            File file = output.resolve(artifact.toPath()).toFile();
+            File file = output.resolve(artifact.toPath(flattenDownloadDir)).toFile();
 
             // Make sure output directory exist
             makeDir(file.getParentFile().toPath());
@@ -774,8 +794,8 @@ public class DMRelocator {
             Objects.requireNonNull(to);
 
             // Jar-relocateor constructor parameters
-            final File input = from.resolve(artifact.toPath()).toFile();
-            final File output = to.resolve(artifact.toPath()).toFile();
+            final File input = from.resolve(artifact.toPath(flattenDownloadDir)).toFile();
+            final File output = to.resolve(artifact.toPath(flattenRelocateDir)).toFile();
             List<Object> rules = new LinkedList<>();
 
             // Delete file if exist

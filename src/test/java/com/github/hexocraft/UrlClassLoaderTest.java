@@ -1,8 +1,5 @@
-package com.github.hexocraft.lib;
+package com.github.hexocraft;
 
-import com.github.hexocraft.lib.DMRelocator.Artifact;
-import com.github.hexocraft.lib.DMRelocator.Downloader;
-import com.github.hexocraft.lib.DMRelocator.UrlClassLoader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,6 +20,11 @@ class UrlClassLoaderTest {
 
     @BeforeAll
     static void init() throws IOException {
+        // Restore default values
+        DMRelocator.forceDownload = false;
+        DMRelocator.forceRelocate = false;
+        DMRelocator.flattenDownloadDir = false;
+        DMRelocator.flattenRelocateDir = false;
         // Temporary folder
         tmpDir = Files.createTempDirectory("DMR_");
         // Maven central repository
@@ -32,17 +34,17 @@ class UrlClassLoaderTest {
     @AfterAll
     static void end() {
         Assertions.assertThrows(IOException.class, () -> {
-            Downloader.deleteDir(tmpDir);
+            DMRelocator.Downloader.deleteDir(tmpDir);
         });
     }
 
     @Test
     void AddToClassLoader() {
         Assertions.assertDoesNotThrow(() -> {
-            Artifact artifact = new Artifact("com.google.code.gson", "gson", "2.8.6");
-            Downloader.download(artifact, repositories, tmpDir);
+            DMRelocator.Artifact artifact = new DMRelocator.Artifact("com.google.code.gson", "gson", "2.8.6");
+            DMRelocator.Downloader.download(artifact, repositories, tmpDir);
 
-            UrlClassLoader.addToClassLoader(UrlClassLoaderTest.class.getClassLoader(), tmpDir.resolve(artifact.toPath()).toFile());
+            DMRelocator.UrlClassLoader.addToClassLoader(UrlClassLoaderTest.class.getClassLoader(), tmpDir.resolve(artifact.toPath()).toFile());
 
             Assertions.assertDoesNotThrow(() -> { Class.forName("com.google.gson.Gson"); });
         });

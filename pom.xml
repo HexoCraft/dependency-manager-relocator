@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- Artifact properties -->
-    <groupId>com.github.hexocraft.lib</groupId>
+    <groupId>com.github.hexocraft</groupId>
     <artifactId>DependencyManagerRelocator</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
@@ -13,7 +13,7 @@
     <!-- Description -->
     <name>Dependency Manager Relocator</name>
     <description>Java dependency manager relocator.</description>
-    <url>https://github.com/hexocraft-lib/dependency-manager-relocator</url>
+    <url>https://github.com/hexocraft/dependency-manager-relocator</url>
 
     <!-- Organization -->
     <organization>
@@ -41,21 +41,21 @@
 
     <!-- Source control manager -->
     <scm>
-        <url>http://github.com/hexocraft-lib/dependency-manager-relocator</url>
-        <connection>scm:git:git://github.com/hexocraft-lib/dependency-manager-relocator.git</connection>
-        <developerConnection>scm:git:git@github.com:hexocraft-lib/dependency-manager-relocator.git</developerConnection>
+        <url>http://github.com/hexocraft/dependency-manager-relocator</url>
+        <connection>scm:git:git://github.com/hexocraft/dependency-manager-relocator.git</connection>
+        <developerConnection>scm:git:git@github.com:hexocraft/dependency-manager-relocator.git</developerConnection>
     </scm>
 
     <!-- Issue management -->
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/hexocraft-lib/dependency-manager-relocator/issues</url>
+        <url>https://github.com/hexocraft/dependency-manager-relocator/issues</url>
     </issueManagement>
 
     <!-- Jenkins server -->
     <ciManagement>
         <system>Jenkins</system>
-        <url>http://jenkins.hexocube.fr/job/hexocraft-lib/job/dependency-manager-relocator</url>
+        <url>http://jenkins.hexocube.fr/job/hexocraft/job/dependency-manager-relocator</url>
     </ciManagement>
 
     <!-- Project properties -->
