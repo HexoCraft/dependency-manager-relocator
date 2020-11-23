@@ -6,7 +6,9 @@ Dependency Manager Relocator
 [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 DMRelocator downloads java dependencies from url or repository, then relocate them using [jar-relocator](https://github.com/lucko/jar-relocator) like you would do whith the maven-shade-plugin.
-This way, it prevent from creating "uber" jar file.
+This way, it prevents from creating "uber" jar file.
+
+**Dependency Manager Relocator** can be used to relocate any libraries from any repositories. It can be a release version of your favorite library or a snapshot version. In case of snapshot version, Dependency Manager Relocator will always check that you use the latest updated snapshot version.
 
 ## Usage
 
@@ -30,23 +32,23 @@ public class Example {
                     // The folder which will contains downloaded dependencies
                     .cacheDir(cacheDir)
                     // (default to false)
-                    .useFlatDir(true)
-                    // (default to false)
-                    .forceDownload(true)
-                    // (default to false)
-                    .forceRelocate(true)
-                    // (default to false)
                     .ignoreHash(false)
                     // logger
                     .logger(Example::log)
+                    // Add repositories
+                    .addMavenCentral()
+                    .addRepository(new Repository(new URL("https://jcenter.bintray.com/")).name("jcenter"))
+                    .addRepository(new Repository(new URL("https://repo.aikar.co/content/groups/aikar")).name("aikar"))
                     // Add artifacts
                     .addArtifact(new Artifact("com.google.code.gson", "gson", "2.8.6"))
                     .addArtifact(new Artifact("org.apache.commons", "commons-lang3", "3.11"))
                     .addArtifact(new Artifact("commons-io", "commons-io", "2.8.0"))
+                    .addArtifact(new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT"))
                     // Add relocations
                     .addRelocation(new Relocation("com.google.gson", "libs.gson"))
                     .addRelocation(new Relocation("org.apache.commons.lang3", "libs.commons-lang3"))
                     .addRelocation(new Relocation("org.apache.commons.io", "libs.commons-io"))
+                    .addRelocation(new Relocation("co.aikar", "libs.aikar"))
                     // relocate artifacts
                     .relocate();
         } catch (IOException e) {
@@ -63,10 +65,17 @@ public class Example {
 ```
 
 ## How to setup
-The main goal of **Dependency Manager Relocator** is to prevent from creating  "uber" jar file, as such, it come pack in one file that you can download from the [release page](https://github.com/hexocraft-lib/dependency-manager-relocator/releases).
+The main goal of **Dependency Manager Relocator** is to prevent from creating  "uber" jar file, as such, it come pack in one file that can be downloaded from the [release page](https://github.com/hexocraft-lib/dependency-manager-relocator/releases).
 You can also use the script below to download the file and to update the package name :
 
 ```bash
-wget https://github.com/hexocraft-lib/dependency-manager-relocator/releases/download/1.0/DMRelocator.java
-sed -i -e "s|com.github.hexocraft.lib|com.packahe.my|" DMRelocator.java
+wget https://github.com/hexocraft-lib/dependency-manager-relocator/releases/download/1.1/DMRelocator.java
+sed -i -e "s|com.github.hexocraft|com.package.my|" DMRelocator.java
+```
+
+or download the current dev version from the rpository :
+
+```bash
+wget https://raw.githubusercontent.com/HexoCraft/dependency-manager-relocator/master/src/main/java/com/github/hexocraft/DMRelocator.java
+sed -i -e "s|com.github.hexocraft|com.package.my|" DMRelocator.java
 ```

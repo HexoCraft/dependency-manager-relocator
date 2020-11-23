@@ -1,8 +1,10 @@
 import com.github.hexocraft.DMRelocator;
 import com.github.hexocraft.DMRelocator.Artifact;
 import com.github.hexocraft.DMRelocator.Relocation;
+import com.github.hexocraft.DMRelocator.Repository;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -25,23 +27,23 @@ public class Example {
                     // The folder which will contains downloaded dependencies
                     .cacheDir(cacheDir)
                     // (default to false)
-                    .useFlatDir(true, false)
-                    // (default to false)
-                    .forceDownload(true)
-                    // (default to false)
-                    .forceRelocate(true)
-                    // (default to false)
                     .ignoreHash(false)
                     // logger
                     .logger(Example::log)
+                    // Add repositories
+                    .addMavenCentral()
+                    .addRepository(new Repository(new URL("https://jcenter.bintray.com/")).name("jcenter"))
+                    .addRepository(new Repository(new URL("https://repo.aikar.co/content/groups/aikar")).name("aikar"))
                     // Add artifacts
                     .addArtifact(new Artifact("com.google.code.gson", "gson", "2.8.6"))
-                    .addArtifact(new Artifact("org.apache.commons", "commons-lang3", "3.11").name("apache.commons.lang3-3.11"))
-                    .addArtifact(new Artifact("commons-io", "commons-io", "2.8.0").name("apache.commons.io-2.8.0"))
+                    .addArtifact(new Artifact("org.apache.commons", "commons-lang3", "3.11"))
+                    .addArtifact(new Artifact("commons-io", "commons-io", "2.8.0"))
+                    .addArtifact(new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT"))
                     // Add relocations
                     .addRelocation(new Relocation("com.google.gson", "libs.gson"))
                     .addRelocation(new Relocation("org.apache.commons.lang3", "libs.commons-lang3"))
                     .addRelocation(new Relocation("org.apache.commons.io", "libs.commons-io"))
+                    .addRelocation(new Relocation("co.aikar", "libs.aikar"))
                     // relocate artifacts
                     .relocate();
         } catch (IOException e) {

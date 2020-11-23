@@ -20,11 +20,6 @@ class UrlClassLoaderTest {
 
     @BeforeAll
     static void init() throws IOException {
-        // Restore default values
-        DMRelocator.forceDownload = false;
-        DMRelocator.forceRelocate = false;
-        DMRelocator.flattenDownloadDir = false;
-        DMRelocator.flattenRelocateDir = false;
         // Temporary folder
         tmpDir = Files.createTempDirectory("DMR_");
         // Maven central repository
@@ -43,7 +38,6 @@ class UrlClassLoaderTest {
         Assertions.assertDoesNotThrow(() -> {
             DMRelocator.Artifact artifact = new DMRelocator.Artifact("com.google.code.gson", "gson", "2.8.6");
             DMRelocator.Downloader.download(artifact, repositories, tmpDir);
-
             DMRelocator.UrlClassLoader.addToClassLoader(UrlClassLoaderTest.class.getClassLoader(), tmpDir.resolve(artifact.toPath()).toFile());
 
             Assertions.assertDoesNotThrow(() -> { Class.forName("com.google.gson.Gson"); });

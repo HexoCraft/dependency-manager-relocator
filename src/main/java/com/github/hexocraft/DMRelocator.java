@@ -17,6 +17,11 @@ package com.github.hexocraft;
  * limitations under the License.
  */
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -30,15 +35,19 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  *
  */
+@SuppressWarnings("unused")
 public class DMRelocator {
 
-    private static final String VERSION = "1.0";
+    private static final String VERSION = "1.1";
 
     // The class loader
     private final ClassLoader classLoader;
@@ -56,22 +65,14 @@ public class DMRelocator {
     private Artifact asmArtifact = new Artifact("org.ow2.asm", "asm", "9.0");
     // Default ASM Commons artifact version to use
     private Artifact asmCommonsArtifact = new Artifact("org.ow2.asm", "asm-commons", "9.0");
-    // Default jar relocator version
+    // Default jar-relocator version
     private Artifact jarRelocatorArtifact = new Artifact("me.lucko", "jar-relocator", "1.4");
 
-    // Hierarchy tree will not be preserved while downloading
-    protected static boolean flattenDownloadDir = false;
-    // Hierarchy tree will not be preserved while relocating
-    protected static boolean flattenRelocateDir = false;
-    // Existing file will removed and downloaded
-    protected static boolean forceDownload = false;
-    // Existing file will removed and relocated
-    protected static boolean forceRelocate = false;
     // Ignore artifact hash result
-    protected static boolean ignoreHash = false;
+    private static boolean ignoreHash = false;
 
     // Logger
-    protected static Consumer<String> logger = System.out::println;
+    private static Consumer<String> logger = System.out::println;
 
 
     /**
@@ -141,44 +142,6 @@ public class DMRelocator {
     }
 
     /**
-     * Hierarchy tree will not be preserved while downloading and relocating
-     * (Default to false)
-     */
-    public DMRelocator useFlatDir(Boolean flatten) {
-        DMRelocator.flattenDownloadDir = flatten;
-        DMRelocator.flattenRelocateDir = flatten;
-        return this;
-    }
-
-    /**
-     * Hierarchy tree will not be preserved while downloading and relocating
-     * (Default to false)
-     */
-    public DMRelocator useFlatDir(Boolean flattenDownloadDir, Boolean flattenRelocateDir) {
-        DMRelocator.flattenDownloadDir = flattenDownloadDir;
-        DMRelocator.flattenRelocateDir = flattenRelocateDir;
-        return this;
-    }
-
-    /**
-     * Existing file will removed and downloaded
-     * (Default to false)
-     */
-    public DMRelocator forceDownload(Boolean force) {
-        DMRelocator.forceDownload = force;
-        return this;
-    }
-
-    /**
-     * Existing file will removed and relocated
-     * (Default to false)
-     */
-    public DMRelocator forceRelocate(Boolean force) {
-        DMRelocator.forceRelocate = force;
-        return this;
-    }
-
-    /**
      * Ignore artifact hash result
      * (Default to false)
      */
@@ -191,7 +154,6 @@ public class DMRelocator {
         DMRelocator.logger = onInfo;
         return this;
     }
-
 
     /**
      * Adds a repository.
@@ -209,13 +171,6 @@ public class DMRelocator {
         repositories.add(repository);
 
         return this;
-    }
-
-    /**
-     * Adds the current user's local Maven repository.
-     */
-    public DMRelocator addMavenLocal() {
-        return addRepository(new Repository(Paths.get(System.getProperty("user.home")).resolve(".m2/repository").toAbsolutePath()).name("Maven local"));
     }
 
     /**
@@ -296,9 +251,9 @@ public class DMRelocator {
 
         // Inject DMRelocator dependencies
         // (asm, asm-commons and jar-relocator)
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmArtifact.toPath(flattenDownloadDir)).toFile());
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(asmCommonsArtifact.toPath(flattenDownloadDir)).toFile());
-        UrlClassLoader.addToClassLoader(classLoader, cacheDir.resolve(jarRelocatorArtifact.toPath(flattenDownloadDir)).toFile());
+        UrlClassLoader.addToClassLoader(classLoader, asmArtifact.toFile(cacheDir));
+        UrlClassLoader.addToClassLoader(classLoader, asmCommonsArtifact.toFile(cacheDir));
+        UrlClassLoader.addToClassLoader(classLoader, jarRelocatorArtifact.toFile(cacheDir));
 
         // Relocate and inject dependencies
         for (Artifact artifact : artifacts) {
@@ -364,14 +319,6 @@ public class DMRelocator {
         }
 
         /**
-         * @param name Artifact name
-         */
-        public Artifact name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        /**
          * @return Artifact group id
          */
         public String groupId() {
@@ -406,10 +353,7 @@ public class DMRelocator {
             return url;
         }
 
-        /**
-         * @return Artifact name
-         */
-        public String name() {
+        String name() {
             if (name != null) {
                 return name;
             } else {
@@ -417,42 +361,69 @@ public class DMRelocator {
             }
         }
 
-        public File toFile() {
+        void name(String name) {
+            this.name = name;
+        }
+
+        public Path toPath(Path root) {
+            return root.resolve(toPath());
+        }
+
+        Path toPath() {
             return Paths.get(groupId.replace(".", "/"))
                     .resolve(artifactId.replace(".", "/"))
                     .resolve(version)
-                    .resolve(name() + ".jar")
-                    .toFile();
+                    .resolve(name() + ".jar");
         }
 
-        public File toFile(boolean flatten) {
-            if (flatten) {
-                return Paths.get(name() + ".jar").toFile();
-            } else {
-                return  toFile();
-            }
+        public File toFile(Path root) {
+            return toPath(root).toFile();
         }
 
-        public Path toPath() {
-            return toFile().toPath();
+        File toFile() {
+            return toPath().toFile();
         }
 
-        public Path toPath(boolean flatten) {
-            return toFile(flatten).toPath();
-        }
-
-        public URL toURL(URL root) throws RuntimeException {
+        URL getBaseUrl(URL root) throws RuntimeException {
             try {
                 URI uri = root.toURI();
                 String path = uri.getPath()
                         + "/" + groupId.replace(".", "/")
                         + "/" + artifactId.replace(".", "/")
-                        + "/" + version
-                        + "/" + artifactId + "-" + URLEncoder.encode(version, "UTF-8") + ".jar";
+                        + "/" + URLEncoder.encode(version, "UTF-8");
+                return uri.resolve(path.replace("//", "/")).toURL();
+            } catch (MalformedURLException | UnsupportedEncodingException | URISyntaxException e) {
+                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
+            }
+        }
+
+        URL getArtifactUrl(URL root) {
+            try {
+                URI uri = getBaseUrl(root).toURI();
+                String path = uri.getPath() + "/" + URLEncoder.encode(name(), "UTF-8") + ".jar";
                 return uri.resolve(path.replace("//", "/")).toURL();
             } catch (MalformedURLException | URISyntaxException | UnsupportedEncodingException e) {
-                throw new RuntimeException("Cannot create artifact url for : " + this.toString(), e);
+                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
             }
+        }
+
+        URL getMetaDataUrl(URL root) {
+            try {
+                URI uri = getBaseUrl(root).toURI();
+                String path = uri.getPath() + "/maven-metadata.xml";
+                return uri.resolve(path.replace("//", "/")).toURL();
+            } catch (MalformedURLException | URISyntaxException e) {
+                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
+            }
+        }
+
+        File getMetaDataFile(Path root) {
+            return Paths.get(root.toString())
+                    .resolve(groupId.replace(".", "/"))
+                    .resolve(artifactId.replace(".", "/"))
+                    .resolve(version)
+                    .resolve("maven-metadata.xml")
+                    .toFile();
         }
 
         public String toString() {
@@ -588,40 +559,30 @@ public class DMRelocator {
             Objects.requireNonNull(artifact, "artifact cannot be null.");
             Objects.requireNonNull(output, "output cannot be null.");
 
-            // Output file to download to
-            File file = output.resolve(artifact.toPath(flattenDownloadDir)).toFile();
-
             // Make sure output directory exist
-            makeDir(file.getParentFile().toPath());
+            makeDir(artifact.toFile(output).getParentFile().toPath());
 
-            // Delete file if exist
-            if (DMRelocator.forceDownload) {
-                logger.accept("Deleting file: " + file.toPath());
-                Files.deleteIfExists(file.toPath());
-            }
-
-            // Check if file already exist
-            if (file.exists()) {
-                logger.accept("Not downloading " + file.getName() + "(already exists)");
-            }
-            // Download artifact from url
-            else if (artifact.url() != null) {
-                downloadFile(artifact.url(), file);
-            }
-            // Download artifact from repositories
-            else if (repositories != null) {
-                downloadFile(artifact, repositories, file);
-            }
-            // Throw an error if no url or repositories are defined
-            else {
-                throw new IOException("Artifact cannot be downloaded");
+            // The file already exist
+            if (!artifact.toFile(output).exists()) {
+                // Download artifact from url
+                if (artifact.url() != null) {
+                    downloadFile(artifact.url(), artifact.toFile(output));
+                }
+                // Download artifact from repositories
+                else if (repositories != null) {
+                    downloadFile(artifact, repositories, output);
+                }
+                // Throw an error if no url or repositories are defined
+                else {
+                    throw new IOException("Artifact cannot be downloaded");
+                }
             }
 
             // Check sha1 hash value
             if (!DMRelocator.ignoreHash) {
                 if (artifact.sha1() != null && !artifact.sha1().isEmpty()) {
-                    if (!checkHash(file, artifact.sha1())) {
-                        throw new RuntimeException("Artifact hash mismatch for file : " + file.getName());
+                    if (!checkHash(artifact.toFile(output), artifact.sha1())) {
+                        throw new RuntimeException("Artifact hash mismatch for file : " + artifact.toFile(output).getName());
                     }
                 }
             }
@@ -701,32 +662,69 @@ public class DMRelocator {
          * @param output       output file
          * @throws IOException If the file cannot be downloaded
          */
-        static void downloadFile(Artifact artifact, List<Repository> repositories, File output) throws IOException {
+        static void downloadFile(Artifact artifact, List<Repository> repositories, Path output) throws IOException {
             Objects.requireNonNull(artifact, "artifact cannot be null.");
             Objects.requireNonNull(repositories, "repositories cannot be null.");
             Objects.requireNonNull(output, "file output be null.");
 
-            boolean exist = Files.exists(output.toPath());
+            // Will be updated when the artifact is found
+            boolean found = false;
 
+            //
+            HttpURLConnection conn;
+            int status;
+
+            // Loop throw all repositories
             for (Repository repository : repositories) {
                 try {
-                    // Don't check in the repository if the file already exist
-                    if (exist) continue;
-                    // Create url from repository
-                    URL url = artifact.toURL(repository.url());
+                    // Don't check in the repository if the artifact is already found
+                    if (found) continue;
+
+                    // Firstly, try to download the file corresponding to the artifact
+                    // --------------------------------------------------------------
+                    URL artifactUrl = artifact.getArtifactUrl(repository.url());
                     // Create connection and check the response
-                    HttpURLConnection conn = openConnection(url);
-                    int status = conn.getResponseCode();
-                    // The file is present
+                    conn = openConnection(artifactUrl);
+                    status = conn.getResponseCode();
+                    // The file is present in the repository
                     if ((status >= 200 && status < 300) || status == 304) {
-                        downloadFile(url, output);
-                        exist = Files.exists(output.toPath());
+                        downloadFile(artifactUrl, artifact.toFile(output));
+                        found = Files.exists(artifact.toPath(output));
+                        continue;
+                    }
+
+                    // If the file does not exist, try to download the maven-metadata.xml file
+                    // -----------------------------------------------------------------------
+                    // Create meta data url from repository
+                    URL metaDataUrl = artifact.getMetaDataUrl(repository.url());
+                    // meta data file to store
+                    File metaDataFile = artifact.getMetaDataFile(output);
+                    // Create connection and check the response
+                    conn = openConnection(metaDataUrl);
+                    status = conn.getResponseCode();
+                    // The file is present in the repository
+                    if ((status >= 200 && status < 300) || status == 304) {
+                        // Download MetaData.xml from repository
+                        downloadFile(metaDataUrl, metaDataFile);
+                        // Use MetaDataHelper to get the latest jar version
+                        MetaDataHelper metaDataHelper = new MetaDataHelper(metaDataFile);
+                        if (!metaDataHelper.isValid()) {
+                            continue;
+                        }
+                        // Update artifact
+                        artifact.name(artifact.artifactId() + "-" + metaDataHelper.getLatest());
+                        artifactUrl = artifact.getArtifactUrl(repository.url());
+                        // Download artifact
+                        if (!artifact.toFile(output).exists()) {
+                            downloadFile(artifactUrl, artifact.toFile(output));
+                        }
+                        found = Files.exists(artifact.toPath(output));
                     }
                 } catch (IOException ignored) {
                 }
             }
 
-            if (!exist) {
+            if (!found) {
                 throw new IOException("Could download artifact '" + artifact.toString() + "' from any of the repositories");
             }
         }
@@ -753,6 +751,199 @@ public class DMRelocator {
             HttpURLConnection connection = openConnection(url);
             return connection.getInputStream();
         }
+
+        static class MetaDataHelper {
+
+            private File metaDataFile;
+            private Metadata metaData;
+
+            public MetaDataHelper(File metaDataFile) {
+                this.metaDataFile = metaDataFile;
+
+                try {
+                    JAXBContext jaxbContext = JAXBContext.newInstance(Metadata.class);
+                    Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+                    metaData = (Metadata) jaxbUnmarshaller.unmarshal(metaDataFile);
+                } catch (JAXBException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            boolean isValid() {
+                return metaData != null && !metaData.groupId.isEmpty() && !metaData.artifactId.isEmpty() && !metaData.version.isEmpty();
+            }
+
+            String getLatest() {
+                for (SnapshotVersion snapshotVersion : metaData.getVersioning().getSnapshotVersions().getSnapshotVersion()) {
+                    if ((snapshotVersion.classifier == null || snapshotVersion.classifier.isEmpty()) && snapshotVersion.extension.equals("jar")) {
+                        return snapshotVersion.value;
+                    }
+                }
+                return "";
+            }
+
+            @XmlRootElement
+            static class Metadata {
+                private String groupId;
+                private String artifactId;
+                private String version;
+                private Versioning versioning;
+
+                public Metadata() {
+                }
+
+                public Metadata(String groupId, String artifactId, String version, Versioning versioning) {
+                    super();
+                    this.groupId = groupId;
+                    this.artifactId = artifactId;
+                    this.versioning = versioning;
+                }
+
+                @XmlElement
+                public String getGroupId() {
+                    return groupId;
+                }
+
+                public void setGroupId(String groupId) {
+                    this.groupId = groupId;
+                }
+
+                @XmlElement
+                public String getArtifactId() {
+                    return artifactId;
+                }
+
+                public void setArtifactId(String artifactId) {
+                    this.artifactId = artifactId;
+                }
+
+                @XmlElement
+                public String getVersion() {
+                    return version;
+                }
+
+                public void setVersion(String version) {
+                    this.version = version;
+                }
+
+                @XmlElement
+                public Versioning getVersioning() {
+                    return versioning;
+                }
+
+                public void setVersioning(Versioning versioning) {
+                    this.versioning = versioning;
+                }
+            }
+
+            static class Versioning {
+                private String lastUpdated;
+                private SnapshotVersions snapshotVersions;
+
+                public Versioning() {
+                }
+
+                public Versioning(String lastUpdated, SnapshotVersions snapshotVersions) {
+                    super();
+                    this.lastUpdated = lastUpdated;
+                    this.snapshotVersions = snapshotVersions;
+                }
+
+                @XmlElement
+                public String getLastUpdated() {
+                    return lastUpdated;
+                }
+
+                public void setLastUpdated(String lastUpdated) {
+                    this.lastUpdated = lastUpdated;
+                }
+
+                @XmlElement
+                public SnapshotVersions getSnapshotVersions() {
+                    return snapshotVersions;
+                }
+
+                public void setSnapshotVersions(SnapshotVersions snapshotVersions) {
+                    this.snapshotVersions = snapshotVersions;
+                }
+            }
+
+            static class SnapshotVersions {
+
+                private List<SnapshotVersion> snapshotVersions;
+
+                public SnapshotVersions() {
+                }
+
+                public SnapshotVersions(List<SnapshotVersion> snapshotVersions) {
+                    super();
+                    this.snapshotVersions = snapshotVersions;
+                }
+
+                @XmlElement
+                public List<SnapshotVersion> getSnapshotVersion() {
+                    return snapshotVersions;
+                }
+
+                public void setSnapshotVersion(List<SnapshotVersion> snapshotVersions) {
+                    this.snapshotVersions = snapshotVersions;
+                }
+            }
+
+            static class SnapshotVersion {
+                private String classifier;
+                private String extension;
+                private String value;
+                private String updated;
+
+                public SnapshotVersion() {
+                }
+
+                public SnapshotVersion(String classifier, String extension, String value, String updated) {
+                    super();
+                    this.classifier = classifier;
+                    this.extension = extension;
+                    this.value = value;
+                    this.updated = updated;
+                }
+
+                @XmlElement
+                public String getClassifier() {
+                    return classifier;
+                }
+
+                public void setClassifier(String classifier) {
+                    this.classifier = classifier;
+                }
+
+                @XmlElement
+                public String getExtension() {
+                    return extension;
+                }
+
+                public void setExtension(String extension) {
+                    this.extension = extension;
+                }
+
+                @XmlElement
+                public String getValue() {
+                    return value;
+                }
+
+                public void setValue(String value) {
+                    this.value = value;
+                }
+
+                @XmlElement
+                public String getUpdated() {
+                    return updated;
+                }
+
+                public void setUpdated(String updated) {
+                    this.updated = updated;
+                }
+            }
+        }
     }
 
 
@@ -769,8 +960,8 @@ public class DMRelocator {
         private static final Class<?> CLASS_RELOCATION;
 
         static {
-            Class<?> classJarRelocator = null;
-            Class<?> classRelocation = null;
+            Class<?> classJarRelocator;
+            Class<?> classRelocation;
             try {
                 classJarRelocator = Class.forName("me.lucko.jarrelocator.JarRelocator");
             } catch (ClassNotFoundException e) {
@@ -794,29 +985,22 @@ public class DMRelocator {
             Objects.requireNonNull(to);
 
             // Jar-relocateor constructor parameters
-            final File input = from.resolve(artifact.toPath(flattenDownloadDir)).toFile();
-            final File output = to.resolve(artifact.toPath(flattenRelocateDir)).toFile();
+            final File input = from.resolve(artifact.toPath(from)).toFile();
+            final File output = to.resolve(artifact.toPath(to)).toFile();
             List<Object> rules = new LinkedList<>();
 
-            // Delete file if exist
-            if (DMRelocator.forceRelocate) {
-                logger.accept("Deleting file: " + output.toPath());
-                Files.deleteIfExists(output.toPath());
-            }
-
-            // Jar-relocateor Relocation instances
-            try {
-                for (Relocation relocation : relocations) {
-                    Constructor<?> constructor = CLASS_RELOCATION.getConstructor(String.class, String.class);
-                    Object instance = constructor.newInstance(relocation.pattern, relocation.relocatedPattern);
-                    rules.add(instance);
-                }
-            } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                throw new RuntimeException("Cannot instantiate Relocation class", e);
-            }
-
-            // Jar-relocateor instances
             if (!output.exists()) {
+                // Jar-relocateor Relocation instances
+                try {
+                    for (Relocation relocation : relocations) {
+                        Constructor<?> constructor = CLASS_RELOCATION.getConstructor(String.class, String.class);
+                        Object instance = constructor.newInstance(relocation.pattern, relocation.relocatedPattern);
+                        rules.add(instance);
+                    }
+                } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+                    throw new RuntimeException("Cannot instantiate Relocation class", e);
+                }
+
                 // Make sure output directory exist
                 Downloader.makeDir(output.getParentFile().toPath());
 
@@ -852,7 +1036,7 @@ public class DMRelocator {
         private final static Method METHOD_ADD_URL;
 
         static {
-            Method methodAddUrl = null;
+            Method methodAddUrl;
             try {
                 methodAddUrl = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
                 methodAddUrl.setAccessible(true);

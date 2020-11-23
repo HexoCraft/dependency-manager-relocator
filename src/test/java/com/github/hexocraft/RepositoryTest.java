@@ -6,22 +6,28 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 
+import static com.github.hexocraft.DMRelocator.Relocator;
+import static com.github.hexocraft.DMRelocator.Repository;
+
 class RepositoryTest {
 
     @BeforeAll
     static void init() {
-        // Restore default values
-        DMRelocator.forceDownload = false;
-        DMRelocator.forceRelocate = false;
-        DMRelocator.flattenDownloadDir = false;
-        DMRelocator.flattenRelocateDir = false;
+    }
+
+    @Test
+    void AddRepository() {
+        Assertions.assertDoesNotThrow(() -> {
+            DMRelocator relocator = Relocator(AttifactTest.class.getClassLoader()).addRepository(new Repository(new URL("https://repo.hexocube.fr/release")));
+            Assertions.assertNotNull(relocator.getRepositories().stream().filter(r -> r.toString().equals("https://repo.hexocube.fr/release")).map(Repository::toString).findFirst().orElse(null));
+        });
     }
 
     @Test
     void MavenCentralRepositoryTest() {
         Assertions.assertDoesNotThrow(() -> {
             URL url = new URL("https://repo1.maven.org/maven2/");
-            DMRelocator.Repository repository = new DMRelocator.Repository(url).name("Maven Central");
+            Repository repository = new Repository(url).name("Maven Central");
 
             Assertions.assertEquals(repository.name(), "Maven Central");
             Assertions.assertTrue(repository.isRemote());
