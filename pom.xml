@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+       Copyright 2020 hexosse <hexosse@gmail.com>
+
+
+       Licensed under the Apache License, Version 2.0 (the "License");
+       you may not use this file except in compliance with the License.
+       You may obtain a copy of the License at
+
+           http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+       WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+       See the License for the specific language governing permissions and
+       limitations under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -7,8 +25,15 @@
     <!-- Artifact properties -->
     <groupId>com.github.hexocraft</groupId>
     <artifactId>DependencyManagerRelocator</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
+
+    <!-- parent pom -->
+    <parent>
+        <groupId>com.github.hexocraft</groupId>
+        <artifactId>hexocraft-parent</artifactId>
+        <version>2</version>
+    </parent>
 
     <!-- Description -->
     <name>Dependency Manager Relocator</name>
@@ -41,9 +66,9 @@
 
     <!-- Source control manager -->
     <scm>
-        <url>http://github.com/hexocraft/dependency-manager-relocator</url>
         <connection>scm:git:git://github.com/hexocraft/dependency-manager-relocator.git</connection>
-        <developerConnection>scm:git:git@github.com:hexocraft/dependency-manager-relocator.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com:hexocraft/dependency-manager-relocator.git</developerConnection>
+        <url>http://github.com/hexocraft/dependency-manager-relocator</url>
     </scm>
 
     <!-- Issue management -->
@@ -52,61 +77,10 @@
         <url>https://github.com/hexocraft/dependency-manager-relocator/issues</url>
     </issueManagement>
 
-    <!-- Jenkins server -->
-    <ciManagement>
-        <system>Jenkins</system>
-        <url>http://jenkins.hexocube.fr/job/hexocraft/job/dependency-manager-relocator</url>
-    </ciManagement>
-
     <!-- Project properties -->
     <properties>
-        <!-- Use java 1.8 everywhere -->
-        <jdk.version>1.8</jdk.version>
-        <maven.compiler.source>${jdk.version}</maven.compiler.source>
-        <maven.compiler.target>${jdk.version}</maven.compiler.target>
-
-        <!-- Source code and resources must be encoded in UTF-8 -->
-        <project.encoding>UTF-8</project.encoding>
-        <project.build.sourceEncoding>${project.encoding}</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>${project.encoding}</project.reporting.outputEncoding>
-
-        <!-- Maven Plugins -->
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-compiler-plugin -->
-        <maven-surefire-plugin.version>3.0.0-M5</maven-surefire-plugin.version>         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-surefire-plugin -->
-
-        <!-- dependencies version -->
-        <junit.jupiter.version>5.7.0</junit.jupiter.version>                            <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+        <inception.year>2020</inception.year>
     </properties>
-
-
-    <!-- HexoCraft artifactory repository should have all needed artifacts to build the libs -->
-    <repositories>
-        <repository>
-            <id>hexocraft-repo-release</id>
-            <url>http://repo.hexocube.fr/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>hexocraft-repo-snapshot</id>
-            <url>http://repo.hexocube.fr/snapshot</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>hexocraft-repo-release</id>
-            <url>http://repo.hexocube.fr/release</url>
-        </pluginRepository>
-        <pluginRepository>
-            <id>hexocraft-repo-snapshot</id>
-            <snapshots />
-            <url>http://repo.hexocube.fr/snapshot</url>
-        </pluginRepository>
-    </pluginRepositories>
 
     <!-- Project dependencies -->
     <dependencies>
@@ -119,34 +93,12 @@
         </dependency>
     </dependencies>
 
-
     <!-- Build options -->
     <build>
         <!-- Basics -->
         <defaultGoal>clean package</defaultGoal>
 
         <plugins>
-            <!-- Compiler -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <!-- Force source and target -->
-                    <source>${jdk.version}</source>
-                    <target>${jdk.version}</target>
-                    <encoding>${project.encoding}</encoding>
-                    <!-- Increase the numbers of errors or warning to display -->
-                    <compilerArguments>
-                        <Xmaxerrs>10000</Xmaxerrs>
-                        <Xmaxwarns>10000</Xmaxwarns>
-                    </compilerArguments>
-                    <!-- Extra configuration -->
-                    <compilerArgument>-Xlint:all</compilerArgument>
-                    <showDeprecation>true</showDeprecation>
-                    <showWarnings>true</showWarnings>
-                </configuration>
-            </plugin>
 
             <!-- Surfire -->
             <plugin>
