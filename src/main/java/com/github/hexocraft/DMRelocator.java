@@ -119,6 +119,8 @@ public class DMRelocator {
     private DMRelocator init() {
         // Add Maven Central repository
         addMavenCentral();
+        // Add Maven Snapshots repository
+        addMavenSnapshots();
 
         return this;
     }
@@ -180,6 +182,18 @@ public class DMRelocator {
         try {
             URL url = new URL("https://repo1.maven.org/maven2/");
             return addRepository(new Repository(url).name("Maven Central"));
+        } catch (MalformedURLException ignored) {
+        }
+        return this;
+    }
+
+    /**
+     * Adds the Maven Central repository.
+     */
+    public DMRelocator addMavenSnapshots() {
+        try {
+            URL url = new URL("https://oss.sonatype.org/content/repositories/snapshots/");
+            return addRepository(new Repository(url).name("Maven Snapshots"));
         } catch (MalformedURLException ignored) {
         }
         return this;
