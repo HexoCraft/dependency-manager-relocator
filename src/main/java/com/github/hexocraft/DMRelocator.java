@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public class DMRelocator {
 
-    private static final String VERSION = "1.1";
+    private static final String VERSION = "1.2";
 
     // The class loader
     private final ClassLoader classLoader;
