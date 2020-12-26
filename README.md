@@ -3,7 +3,10 @@ Dependency Manager Relocator
 
 **Java dependencies loader and relocator**
 
-[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.hexocraft/DependencyManagerRelocator?label=stable&color=%23f6cf17)][Maven Central]
+![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.github.hexocraft/DependencyManagerRelocator?label=dev&server=https%3A%2F%2Foss.sonatype.org)
+
 
 DMRelocator downloads java dependencies from url or repository, then relocate them using [jar-relocator](https://github.com/lucko/jar-relocator) like you would do whith the maven-shade-plugin.
 This way, it prevents from creating "uber" jar file.
@@ -79,3 +82,5 @@ or download the current dev version from the rpository :
 wget https://raw.githubusercontent.com/HexoCraft/dependency-manager-relocator/master/src/main/java/com/github/hexocraft/DMRelocator.java
 sed -i -e "s|com.github.hexocraft|com.package.my|" DMRelocator.java
 ```
+
+[Maven Central]: https://search.maven.org/search?q=g:com.github.hexocraft%20AND%20a:DependencyManagerRelocator*
