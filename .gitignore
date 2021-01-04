@@ -106,9 +106,10 @@ local.properties
 .idea/jarRepositories.xml
 .idea/modules.xml
 .idea/*.iml
-# .idea/modules
-# *.iml
-# *.ipr
+.idea/modules
+*.iml
+*.ipr
+.idea/runConfigurations
 
 # CMake
 cmake-build-*/

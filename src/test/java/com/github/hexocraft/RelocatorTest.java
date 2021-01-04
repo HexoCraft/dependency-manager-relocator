@@ -78,4 +78,68 @@ class RelocatorTest {
             Assertions.assertDoesNotThrow(() -> Class.forName("com.github.hexocraft.libs.aikar.commands.Annotations"));
         });
     }
+
+    //@Test
+    void RelocateTest() {
+        Assertions.assertDoesNotThrow(() -> {
+            String RELOCATION_ROOT = "com.github.hexocraft.libs.";
+            Relocator(RelocatorTest.class.getClassLoader())
+                    .cacheDir(cacheDir)
+                    .libDir(libDir)
+                    // Add Maven repositories
+                    .addRepository(new Repository(new URL("https://repo.aikar.co/content/groups/aikar")).name("aikar"))
+                    .addRepository(new Repository(new URL("http://nexus.hc.to/content/repositories/pub_releases")).name("vault"))
+                    // Add artifacts
+                    // --> commons
+                    .addArtifact(new Artifact("com.google.code.gson", "gson", "2.8.6"))
+                    .addArtifact(new Artifact("com.google.guava", "guava", "30.0-jre"))
+                    .addArtifact(new Artifact("com.typesafe", "config", "1.4.1"))
+                    .addArtifact(new Artifact("org.yaml", "snakeyaml", "1.27"))
+                    // --> configuration
+                    .addArtifact(new Artifact("org.spongepowered", "configurate-core", "4.0.0"))
+                    .addArtifact(new Artifact("org.spongepowered", "configurate-hocon", "4.0.0"))
+                    .addArtifact(new Artifact("org.spongepowered", "configurate-yaml", "4.0.0"))
+                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-core", "1.0.0-SNAPSHOT"))
+                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-hocon", "1.0.0-SNAPSHOT"))
+                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-yaml", "1.0.0-SNAPSHOT"))
+                    // --> Annotation Command Framework
+                    .addArtifact(new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT"))
+                    .addArtifact(new Artifact("co.aikar", "acf-bukkit", "0.5.0-SNAPSHOT"))
+                    .addArtifact(new Artifact("co.aikar", "acf-paper", "0.5.0-SNAPSHOT"))
+                    // --> Vault API
+                    .addArtifact(new Artifact("net.milkbowl.vault", "VaultAPI", "1.7"))
+                    // Add relocations
+                    // --> commons
+                    .addRelocation(new Relocation("com.google", RELOCATION_ROOT + "google"))
+                    .addRelocation(new Relocation("com.typesafe.config", RELOCATION_ROOT + "typesafe.config"))
+                    .addRelocation(new Relocation("org.yaml.snakeyaml", RELOCATION_ROOT + "snakeyaml"))
+                    // --> configuration
+                    .addRelocation(new Relocation("org.spongepowered.configurate", RELOCATION_ROOT + "configurate"))
+                    .addRelocation(new Relocation("com.github.hexocraft.configuration", RELOCATION_ROOT + "configuration"))
+                    // --> Annotation Command Framework
+                    .addRelocation(new Relocation("co.aikar.commands", RELOCATION_ROOT + "acf"))
+                    .addRelocation(new Relocation("co.aikar.locales", RELOCATION_ROOT + "locales"))
+                    // --> Vault API
+                    .addRelocation(new Relocation("net.milkbowl.vault", RELOCATION_ROOT + "vault"))
+                    // relocate artifacts
+                    .relocate();
+
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "google.gson.Gson"));
+
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configurate.ConfigurateException"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configurate.hocon.HoconConfigurationLoader"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configurate.yaml.YamlConfigurationLoader"));
+
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.AbstractConfiguration"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.hocon.HoconConfiguration"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.yaml.YamlConfiguration"));
+
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.CommandContexts"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.BukkitCommandContexts"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.PaperCommandContexts"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "locales.LocaleManager"));
+
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "vault.economy.Economy"));
+        });
+    }
 }

@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public class DMRelocator {
 
-    private static final String VERSION = "1.2";
+    private static final String VERSION = "1.3";
 
     // The class loader
     private final ClassLoader classLoader;
@@ -76,7 +76,7 @@ public class DMRelocator {
 
 
     /**
-     * Instanciate DMRelocator from ClassLoader
+     * Instantiate DMRelocator from ClassLoader
      *
      * @param classLoader class loader
      * @return Instance on DMRelocator
@@ -86,7 +86,7 @@ public class DMRelocator {
     }
 
     /**
-     * Instanciate DMRelocator from Class
+     * Instantiate DMRelocator from Class
      *
      * @param clazz class loader class
      * @return Instance on DMRelocator
@@ -96,7 +96,7 @@ public class DMRelocator {
     }
 
     /**
-     * Instanciate DMRelocator from ClassLoader
+     * Instantiate DMRelocator from ClassLoader
      *
      * @param classLoader class loader
      */
@@ -105,7 +105,7 @@ public class DMRelocator {
     }
 
     /**
-     * Instanciate DMRelocator from Class
+     * Instantiate DMRelocator from Class
      *
      * @param clazz class loader class
      */
@@ -557,6 +557,10 @@ public class DMRelocator {
      * Download files (jar, pom, ...) from urls
      */
     static class Downloader {
+
+        //
+        private static Proxy proxy;
+
         private Downloader() {
         }
 
@@ -739,12 +743,37 @@ public class DMRelocator {
             }
 
             if (!found) {
-                throw new IOException("Could download artifact '" + artifact.toString() + "' from any of the repositories");
+                throw new IOException("Could not download artifact '" + artifact.toString() + "' from any of the repositories");
             }
         }
 
+        /**
+         * Get the proxy used by the JVM
+         */
+        public static Proxy getProxy() {
+
+            // Return already foud proxy
+            if (proxy != null) {
+                return proxy;
+            }
+
+            // Try to find the first proxy used by the JVM
+            try {
+                ProxySelector selector = ProxySelector.getDefault();
+                List<Proxy> proxyList = selector.select(new URI("http://foo/bar"));
+
+                if (proxyList != null && !proxyList.isEmpty()) {
+                    proxy = proxyList.get(0);
+                    return proxy;
+                }
+            } catch (Exception ignored) {
+            }
+            return null;
+        }
+
         static HttpURLConnection openConnection(URL url) throws IOException {
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            Proxy proxy = getProxy();
+            final HttpURLConnection conn = (HttpURLConnection) (proxy != null ? url.openConnection(proxy) : url.openConnection());
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setInstanceFollowRedirects(true);
             conn.setConnectTimeout(5000);
@@ -998,13 +1027,13 @@ public class DMRelocator {
             Objects.requireNonNull(from);
             Objects.requireNonNull(to);
 
-            // Jar-relocateor constructor parameters
+            // Jar-relocator constructor parameters
             final File input = from.resolve(artifact.toPath(from)).toFile();
             final File output = to.resolve(artifact.toPath(to)).toFile();
             List<Object> rules = new LinkedList<>();
 
             if (!output.exists()) {
-                // Jar-relocateor Relocation instances
+                // Jar-relocator Relocation instances
                 try {
                     for (Relocation relocation : relocations) {
                         Constructor<?> constructor = CLASS_RELOCATION.getConstructor(String.class, String.class);
