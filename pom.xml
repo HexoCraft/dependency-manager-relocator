@@ -32,13 +32,13 @@
     <parent>
         <groupId>com.github.hexocraft</groupId>
         <artifactId>hexocraft-parent</artifactId>
-        <version>7</version>
+        <version>8</version>
     </parent>
 
     <!-- Description -->
     <name>Dependency Manager Relocator</name>
     <description>Java dependency manager relocator.</description>
-    <url>https://github.com/hexocraft/dependency-manager-relocator</url>
+    <url>https://github.com/hexocraft/DependencyManagerRelocator</url>
 
     <!-- Organization -->
     <organization>
@@ -46,7 +46,7 @@
         <url>https://github.com/hexocraft</url>
     </organization>
 
-    <!-- Want to contibute? Anybody is welcome -->
+    <!-- Want to contribute? Anybody is welcome -->
     <developers>
         <developer>
             <id>hexosse</id>
@@ -66,55 +66,20 @@
 
     <!-- Source control manager -->
     <scm>
-        <connection>scm:git:git://github.com/hexocraft/dependency-manager-relocator.git</connection>
-        <developerConnection>scm:git:ssh://github.com:hexocraft/dependency-manager-relocator.git</developerConnection>
-        <url>http://github.com/hexocraft/dependency-manager-relocator</url>
+        <connection>scm:git:git://github.com/hexocraft/DependencyManagerRelocator.git</connection>
+        <developerConnection>scm:git:ssh://github.com:hexocraft/DependencyManagerRelocator.git</developerConnection>
+        <url>http://github.com/hexocraft/DependencyManagerRelocator</url>
     </scm>
 
     <!-- Issue management -->
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/hexocraft/dependency-manager-relocator/issues</url>
+        <url>https://github.com/hexocraft/DependencyManagerRelocator/issues</url>
     </issueManagement>
 
     <!-- Project properties -->
     <properties>
         <inception.year>2020</inception.year>
     </properties>
-
-    <!-- Project dependencies -->
-    <dependencies>
-        <!-- JUnit 5 -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <!-- Build options -->
-    <build>
-        <!-- Basics -->
-        <defaultGoal>clean package</defaultGoal>
-
-        <plugins>
-
-            <!-- Surfire -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven-surefire-plugin.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junit.jupiter.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-        </plugins>
-    </build>
 
 </project>
