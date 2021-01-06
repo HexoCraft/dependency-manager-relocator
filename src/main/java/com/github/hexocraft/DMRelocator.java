@@ -1,5 +1,3 @@
-package com.github.hexocraft;
-
 /**
  *    Copyright 2020 hexosse <hexosse@gmail.com>
  *
@@ -16,9 +14,9 @@ package com.github.hexocraft;
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
+package com.github.hexocraft;
 
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -38,8 +36,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  *
@@ -47,7 +46,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 public class DMRelocator {
 
-    private static final String VERSION = "1.3";
+    public static final String VERSION = "1.4";
 
     // The class loader
     private final ClassLoader classLoader;
@@ -62,17 +61,17 @@ public class DMRelocator {
     // Relocation's to apply
     private final List<Relocation> relocations = new LinkedList<>();
     // Default ASM artifact version to use
-    private Artifact asmArtifact = new Artifact("org.ow2.asm", "asm", "9.0");
+    private final Artifact asmArtifact = new Artifact("org.ow2.asm", "asm", "9.0");
     // Default ASM Commons artifact version to use
-    private Artifact asmCommonsArtifact = new Artifact("org.ow2.asm", "asm-commons", "9.0");
+    private final Artifact asmCommonsArtifact = new Artifact("org.ow2.asm", "asm-commons", "9.0");
     // Default jar-relocator version
-    private Artifact jarRelocatorArtifact = new Artifact("me.lucko", "jar-relocator", "1.4");
+    private final Artifact jarRelocatorArtifact = new Artifact("me.lucko", "jar-relocator", "1.4");
 
     // Ignore artifact hash result
-    private static boolean ignoreHash = false;
+    private boolean ignoreHash = false;
 
     // Logger
-    private static Consumer<String> logger = System.out::println;
+    private Consumer<String> logger = System.out::println;
 
 
     /**
@@ -148,12 +147,12 @@ public class DMRelocator {
      * (Default to false)
      */
     public DMRelocator ignoreHash(Boolean ignore) {
-        DMRelocator.ignoreHash = ignore;
+        this.ignoreHash = ignore;
         return this;
     }
 
     public DMRelocator logger(Consumer<String> onInfo) {
-        DMRelocator.logger = onInfo;
+        this.logger = onInfo;
         return this;
     }
 
@@ -166,9 +165,9 @@ public class DMRelocator {
      * @param repository Repository to add
      */
     public DMRelocator addRepository(Repository repository) {
-        Objects.requireNonNull(repository, "repository cannot be null");
+        requireNonNull(repository, "repository cannot be null");
         // Remove existing repository
-        repositories.removeIf(r -> (r.url() != null && r.url().equals(repository.url())) || (r.basedir() != null && r.basedir().equals(repository.basedir())));
+        repositories.removeIf(r -> (r.url() != null && repository.url() != null && r.url().toString().equals(repository.url().toString())) || (r.basedir() != null && r.basedir().equals(repository.basedir())));
         // Add to the repositories list
         repositories.add(repository);
 
@@ -183,6 +182,7 @@ public class DMRelocator {
             URL url = new URL("https://repo1.maven.org/maven2/");
             return addRepository(new Repository(url).name("Maven Central"));
         } catch (MalformedURLException ignored) {
+            // Exception ignored
         }
         return this;
     }
@@ -195,6 +195,7 @@ public class DMRelocator {
             URL url = new URL("https://oss.sonatype.org/content/repositories/snapshots/");
             return addRepository(new Repository(url).name("Maven Snapshots"));
         } catch (MalformedURLException ignored) {
+            // Exception ignored
         }
         return this;
     }
@@ -211,7 +212,7 @@ public class DMRelocator {
      * @param artifact Artifact to add
      */
     public DMRelocator addArtifact(Artifact artifact) {
-        Objects.requireNonNull(artifact, "artifact cannot be null");
+        requireNonNull(artifact, "artifact cannot be null");
         // Remove existing artifact
         artifacts.removeIf(a -> a.groupId().equals(artifact.groupId()) && a.artifactId().equals(artifact.artifactId()));
         // Add to the artifacts list
@@ -234,7 +235,7 @@ public class DMRelocator {
      * @param relocation Relocation to add
      */
     public DMRelocator addRelocation(Relocation relocation) {
-        Objects.requireNonNull(relocation, "relocation cannot be null");
+        requireNonNull(relocation, "relocation cannot be null");
         // Remove existing relocation
         relocations.removeIf(r -> r.pattern().equals(relocation.pattern()));
         // Add to the artifacts list
@@ -251,16 +252,18 @@ public class DMRelocator {
      * Download artifacts and relocate them
      */
     public DMRelocator relocate() throws IOException {
+        // Create downloader
+        Downloader downloader = new Downloader(this);
 
         // Download DMRelocator dependencies
         // (asm, asm-commons and jar-relocator)
-        Downloader.download(asmArtifact, repositories, cacheDir);
-        Downloader.download(asmCommonsArtifact, repositories, cacheDir);
-        Downloader.download(jarRelocatorArtifact, repositories, cacheDir);
+        downloader.download(asmArtifact, repositories, cacheDir);
+        downloader.download(asmCommonsArtifact, repositories, cacheDir);
+        downloader.download(jarRelocatorArtifact, repositories, cacheDir);
 
         // Download artifacts
         for (Artifact artifact : artifacts) {
-            Downloader.download(artifact, repositories, cacheDir);
+            downloader.download(artifact, repositories, cacheDir);
         }
 
         // Inject DMRelocator dependencies
@@ -269,9 +272,12 @@ public class DMRelocator {
         UrlClassLoader.addToClassLoader(classLoader, asmCommonsArtifact.toFile(cacheDir));
         UrlClassLoader.addToClassLoader(classLoader, jarRelocatorArtifact.toFile(cacheDir));
 
+        // Create relocator
+        Relocator relocator = new Relocator(this);
+
         // Relocate and inject dependencies
         for (Artifact artifact : artifacts) {
-            Relocator.relocate(classLoader, artifact, relocations, cacheDir, libDir);
+            relocator.relocate(classLoader, artifact, relocations, cacheDir, libDir);
         }
 
         return this;
@@ -398,16 +404,18 @@ public class DMRelocator {
             return toPath().toFile();
         }
 
-        URL getBaseUrl(URL root) throws RuntimeException {
+        URL getBaseUrl(URL root) {
             try {
                 URI uri = root.toURI();
-                String path = uri.getPath()
-                        + "/" + groupId.replace(".", "/")
-                        + "/" + artifactId.replace(".", "/")
-                        + "/" + URLEncoder.encode(version, "UTF-8");
+                String path = String.join("/"
+                        , uri.getPath()
+                        , groupId.replace(".", "/")
+                        , artifactId.replace(".", "/")
+                        , URLEncoder.encode(version, "UTF-8")
+                );
                 return uri.resolve(path.replace("//", "/")).toURL();
             } catch (MalformedURLException | UnsupportedEncodingException | URISyntaxException e) {
-                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
+                throw new RelocatorException("Cannot create base url for : " + this.toString(), e);
             }
         }
 
@@ -417,7 +425,7 @@ public class DMRelocator {
                 String path = uri.getPath() + "/" + URLEncoder.encode(name(), "UTF-8") + ".jar";
                 return uri.resolve(path.replace("//", "/")).toURL();
             } catch (MalformedURLException | URISyntaxException | UnsupportedEncodingException e) {
-                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
+                throw new RelocatorException("Cannot create artifact base url for : " + this.toString(), e);
             }
         }
 
@@ -427,7 +435,7 @@ public class DMRelocator {
                 String path = uri.getPath() + "/maven-metadata.xml";
                 return uri.resolve(path.replace("//", "/")).toURL();
             } catch (MalformedURLException | URISyntaxException e) {
-                throw new RuntimeException("Cannot create artifact base url for : " + this.toString(), e);
+                throw new RelocatorException("Cannot create maven-metadata base url for : " + this.toString(), e);
             }
         }
 
@@ -454,9 +462,9 @@ public class DMRelocator {
     public static class Repository {
 
         // Repository url
-        private URL url;
+        private final URL url;
         // The base directory of the repository
-        private Path basedir;
+        private final Path basedir;
         // Repository name
         private String name;
 
@@ -526,7 +534,7 @@ public class DMRelocator {
         }
 
         public String toString() {
-            return url.toString();
+            return isRemote() ? url.toString() : "";
         }
     }
 
@@ -559,12 +567,15 @@ public class DMRelocator {
     static class Downloader {
 
         //
-        private static Proxy proxy;
-
-        private Downloader() {
-        }
+        private final DMRelocator dmRelocator;
+        private Proxy proxy;
 
         static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.75 Safari/535.7";
+
+        public Downloader(DMRelocator dmRelocator) {
+            requireNonNull(dmRelocator, "dmRelocator cannot be null");
+            this.dmRelocator = dmRelocator;
+        }
 
         /**
          * Download file from url
@@ -573,9 +584,9 @@ public class DMRelocator {
          * @param repositories List of repositories to download the artifact from
          * @param output       Where to download the artifact
          */
-        static void download(Artifact artifact, List<Repository> repositories, Path output) throws IOException, RuntimeException {
-            Objects.requireNonNull(artifact, "artifact cannot be null.");
-            Objects.requireNonNull(output, "output cannot be null.");
+        void download(Artifact artifact, List<Repository> repositories, Path output) throws IOException {
+            requireNonNull(artifact, "artifact cannot be null.");
+            requireNonNull(output, "output cannot be null.");
 
             // Make sure output directory exist
             makeDir(artifact.toFile(output).getParentFile().toPath());
@@ -592,17 +603,15 @@ public class DMRelocator {
                 }
                 // Throw an error if no url or repositories are defined
                 else {
-                    throw new IOException("Artifact cannot be downloaded");
+                    throw new RelocatorException("Artifact cannot be downloaded");
                 }
             }
 
             // Check sha1 hash value
-            if (!DMRelocator.ignoreHash) {
-                if (artifact.sha1() != null && !artifact.sha1().isEmpty()) {
-                    if (!checkHash(artifact.toFile(output), artifact.sha1())) {
-                        throw new RuntimeException("Artifact hash mismatch for file : " + artifact.toFile(output).getName());
-                    }
-                }
+            if (!dmRelocator.ignoreHash
+                    && artifact.sha1() != null && !artifact.sha1().isEmpty()
+                    && !checkHash(artifact.toFile(output), artifact.sha1())) {
+                throw new RelocatorException("Artifact hash mismatch for file : " + artifact.toFile(output).getName());
             }
         }
 
@@ -612,7 +621,7 @@ public class DMRelocator {
          * @param dir Directory to create
          */
         static void makeDir(Path dir) throws IOException {
-            Objects.requireNonNull(dir, "dir cannot be null.");
+            requireNonNull(dir, "dir cannot be null.");
 
             if (Files.exists(dir)) {
                 if (!Files.isDirectory(dir)) {
@@ -630,7 +639,7 @@ public class DMRelocator {
          * @throws IOException if an error occur while deleting files and folders
          */
         static void deleteDir(Path dir) throws IOException {
-            Objects.requireNonNull(dir, "dir cannot be null.");
+            requireNonNull(dir, "dir cannot be null.");
             File[] contents = dir.toFile().listFiles();
             if (contents != null) {
                 for (File f : contents) {
@@ -648,9 +657,9 @@ public class DMRelocator {
          * @param file File to check
          * @param sha1 Hash value
          */
-        static boolean checkHash(File file, String sha1) throws IllegalArgumentException {
-            Objects.requireNonNull(file, "file cannot be null.");
-            Objects.requireNonNull(sha1, "file cannot be null.");
+        boolean checkHash(File file, String sha1) {
+            requireNonNull(file, "file cannot be null.");
+            requireNonNull(sha1, "sha1 cannot be null.");
             if (sha1.isEmpty()) {
                 throw new IllegalArgumentException("file cannot be empty.");
             }
@@ -664,12 +673,17 @@ public class DMRelocator {
          * @param output output file
          * @throws IOException If the file cannot be downloaded
          */
-        static void downloadFile(URL url, File output) throws IOException {
-            logger.accept("Downloading file: " + url);
-            ReadableByteChannel readableByteChannel = Channels.newChannel(openStream(url));
-            FileOutputStream fileOutputStream = new FileOutputStream(output);
-            fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-            fileOutputStream.close();
+        void downloadFile(URL url, File output) throws IOException {
+            dmRelocator.logger.accept("Downloading file: " + url);
+
+            try (
+                    ReadableByteChannel readableByteChannel = Channels.newChannel(openStream(url));
+                    FileOutputStream fileOutputStream = new FileOutputStream(output)
+            ) {
+                fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                requireNonNull(fileOutputStream).close();
+                requireNonNull(readableByteChannel).close();
+            }
         }
 
         /**
@@ -678,12 +692,11 @@ public class DMRelocator {
          * @param artifact     artifact to download
          * @param repositories repositories to look for the artifact file
          * @param output       output file
-         * @throws IOException If the file cannot be downloaded
          */
-        static void downloadFile(Artifact artifact, List<Repository> repositories, Path output) throws IOException {
-            Objects.requireNonNull(artifact, "artifact cannot be null.");
-            Objects.requireNonNull(repositories, "repositories cannot be null.");
-            Objects.requireNonNull(output, "file output be null.");
+        void downloadFile(Artifact artifact, List<Repository> repositories, Path output) {
+            requireNonNull(artifact, "artifact cannot be null.");
+            requireNonNull(repositories, "repositories cannot be null.");
+            requireNonNull(output, "file output be null.");
 
             // Will be updated when the artifact is found
             boolean found = false;
@@ -738,19 +751,20 @@ public class DMRelocator {
                         }
                         found = Files.exists(artifact.toPath(output));
                     }
-                } catch (IOException ignored) {
+                } catch (Exception ignored) {
+                    // Exception ignored
                 }
             }
 
             if (!found) {
-                throw new IOException("Could not download artifact '" + artifact.toString() + "' from any of the repositories");
+                throw new RelocatorException("Could not download artifact '" + artifact.toString() + "' from any of the repositories");
             }
         }
 
         /**
          * Get the proxy used by the JVM
          */
-        public static Proxy getProxy() {
+        Proxy getProxy() {
 
             // Return already foud proxy
             if (proxy != null) {
@@ -767,13 +781,14 @@ public class DMRelocator {
                     return proxy;
                 }
             } catch (Exception ignored) {
+                // Exception ignored
             }
             return null;
         }
 
-        static HttpURLConnection openConnection(URL url) throws IOException {
-            Proxy proxy = getProxy();
-            final HttpURLConnection conn = (HttpURLConnection) (proxy != null ? url.openConnection(proxy) : url.openConnection());
+        HttpURLConnection openConnection(URL url) throws IOException {
+            Proxy p = getProxy();
+            final HttpURLConnection conn = (HttpURLConnection) (p != null ? url.openConnection(p) : url.openConnection());
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setInstanceFollowRedirects(true);
             conn.setConnectTimeout(5000);
@@ -790,25 +805,23 @@ public class DMRelocator {
             return conn;
         }
 
-        static InputStream openStream(URL url) throws IOException {
+        InputStream openStream(URL url) throws IOException {
             HttpURLConnection connection = openConnection(url);
             return connection.getInputStream();
         }
 
         static class MetaDataHelper {
 
-            private File metaDataFile;
-            private Metadata metaData;
+            private final Metadata metaData;
 
             public MetaDataHelper(File metaDataFile) {
-                this.metaDataFile = metaDataFile;
-
                 try {
                     JAXBContext jaxbContext = JAXBContext.newInstance(Metadata.class);
                     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-                    metaData = (Metadata) jaxbUnmarshaller.unmarshal(metaDataFile);
-                } catch (JAXBException e) {
-                    e.printStackTrace();
+                    this.metaData = (Metadata) jaxbUnmarshaller.unmarshal(metaDataFile);
+                }
+                catch(Exception e) {
+                    throw new RelocatorException(e);
                 }
             }
 
@@ -839,6 +852,7 @@ public class DMRelocator {
                     super();
                     this.groupId = groupId;
                     this.artifactId = artifactId;
+                    this.version = version;
                     this.versioning = versioning;
                 }
 
@@ -913,23 +927,23 @@ public class DMRelocator {
 
             static class SnapshotVersions {
 
-                private List<SnapshotVersion> snapshotVersions;
+                private List<SnapshotVersion> versions;
 
                 public SnapshotVersions() {
                 }
 
-                public SnapshotVersions(List<SnapshotVersion> snapshotVersions) {
+                public SnapshotVersions(List<SnapshotVersion> versions) {
                     super();
-                    this.snapshotVersions = snapshotVersions;
+                    this.versions = versions;
                 }
 
                 @XmlElement
                 public List<SnapshotVersion> getSnapshotVersion() {
-                    return snapshotVersions;
+                    return versions;
                 }
 
                 public void setSnapshotVersion(List<SnapshotVersion> snapshotVersions) {
-                    this.snapshotVersions = snapshotVersions;
+                    this.versions = snapshotVersions;
                 }
             }
 
@@ -996,7 +1010,11 @@ public class DMRelocator {
      * It use jar-relocator (https://github.com/lucko/jar-relocator)
      */
     static class Relocator {
-        private Relocator() {
+
+        private final DMRelocator dmRelocator;
+
+        public Relocator(DMRelocator dmRelocator) {
+            this.dmRelocator = dmRelocator;
         }
 
         private static final Class<?> CLASS_JAR_RELOCATOR;
@@ -1008,24 +1026,24 @@ public class DMRelocator {
             try {
                 classJarRelocator = Class.forName("me.lucko.jarrelocator.JarRelocator");
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Could not found class me.lucko.jarrelocator.JarRelocator", e);
+                throw new RelocatorException("Could not found class me.lucko.jarrelocator.JarRelocator", e);
             }
             try {
                 classRelocation = Class.forName("me.lucko.jarrelocator.Relocation");
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Could not found class me.lucko.jarrelocator.Relocation", e);
+                throw new RelocatorException("Could not found class me.lucko.jarrelocator.Relocation", e);
             }
             CLASS_JAR_RELOCATOR = classJarRelocator;
             CLASS_RELOCATION = classRelocation;
         }
 
-        static void relocate(ClassLoader classLoader, Artifact artifact, Collection<Relocation> relocations, Path from, Path to) throws IOException, RuntimeException {
+        void relocate(ClassLoader classLoader, Artifact artifact, Collection<Relocation> relocations, Path from, Path to) {
             // All parameters must not be null
-            Objects.requireNonNull(classLoader);
-            Objects.requireNonNull(artifact);
-            Objects.requireNonNull(relocations);
-            Objects.requireNonNull(from);
-            Objects.requireNonNull(to);
+            requireNonNull(classLoader);
+            requireNonNull(artifact);
+            requireNonNull(relocations);
+            requireNonNull(from);
+            requireNonNull(to);
 
             // Jar-relocator constructor parameters
             final File input = from.resolve(artifact.toPath(from)).toFile();
@@ -1041,24 +1059,27 @@ public class DMRelocator {
                         rules.add(instance);
                     }
                 } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
-                    throw new RuntimeException("Cannot instantiate Relocation class", e);
+                    throw new RelocatorException("Cannot instantiate Relocation class", e);
                 }
 
                 // Make sure output directory exist
-                Downloader.makeDir(output.getParentFile().toPath());
-
-                //
-                logger.accept("Relocating file: " + input.toPath() + " to: " + output.toPath());
+                try {
+                    Downloader.makeDir(output.getParentFile().toPath());
+                } catch (IOException e) {
+                    throw new RelocatorException("Cannot create output folder", e);
+                }
 
                 // Run jar locator
                 try {
+                    dmRelocator.logger.accept("Relocating file: " + input.toPath() + " to: " + output.toPath());
+
                     Constructor<?> constructor = CLASS_JAR_RELOCATOR.getConstructor(File.class, File.class, Collection.class);
                     Object instance = constructor.newInstance(input, output, rules);
                     Method run = CLASS_JAR_RELOCATOR.getMethod("run");
                     run.invoke(instance);
 
                 } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
-                    throw new RuntimeException("Cannot instantiate JarRelocator class", e);
+                    throw new RelocatorException("Cannot instantiate JarRelocator class", e);
                 }
 
             }
@@ -1076,7 +1097,7 @@ public class DMRelocator {
         private UrlClassLoader() {
         }
 
-        private final static Method METHOD_ADD_URL;
+        private static final Method METHOD_ADD_URL;
 
         static {
             Method methodAddUrl;
@@ -1084,23 +1105,23 @@ public class DMRelocator {
                 methodAddUrl = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
                 methodAddUrl.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("Could not found method addURL from URLClassLoader", e);
+                throw new RelocatorException("Could not found method addURL from URLClassLoader", e);
             }
             METHOD_ADD_URL = methodAddUrl;
         }
 
-        public static void addToClassLoader(ClassLoader classLoader, File input) throws RuntimeException {
-            Objects.requireNonNull(classLoader, "classLoader cannot be null.");
-            Objects.requireNonNull(input, "input cannot be null.");
+        public static void addToClassLoader(ClassLoader classLoader, File input) {
+            requireNonNull(classLoader, "classLoader cannot be null.");
+            requireNonNull(input, "input cannot be null.");
 
             if (classLoader instanceof URLClassLoader) {
                 try {
                     METHOD_ADD_URL.invoke(classLoader, new URL("jar:file:" + input.getPath() + "!/"));
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | MalformedURLException e) {
-                    throw new RuntimeException("Error while adding jar file : " + input.getName() + " to the class loader", e);
+                    throw new RelocatorException("Error while adding jar file : " + input.getName() + " to the class loader", e);
                 }
             } else {
-                throw new RuntimeException("Unknown classloader: " + classLoader.getClass());
+                throw new RelocatorException("Unknown classloader: " + classLoader.getClass());
             }
         }
     }
@@ -1116,23 +1137,25 @@ public class DMRelocator {
         /**
          * Generate a file's sha1 hash value.
          */
-        static String sha1Code(File file) throws RuntimeException {
+        static String sha1Code(File file) {
+            requireNonNull(file, "file cannot be null.");
+
             try {
-                if (file == null) {
-                    throw new IllegalArgumentException("file cannot be null.");
-                }
-                FileInputStream fileInputStream = new FileInputStream(file);
                 MessageDigest digest = MessageDigest.getInstance("SHA-1");
-                DigestInputStream digestInputStream = new DigestInputStream(fileInputStream, digest);
-                byte[] bytes = new byte[1024];
-                // read all file content
-                while (digestInputStream.read(bytes) > 0) ;
-                byte[] resultByteArr = digest.digest();
-                digestInputStream.close();
-                fileInputStream.close();
-                return bytesToHexString(resultByteArr);
-            } catch (IOException | NoSuchAlgorithmException e) {
-                throw new RuntimeException("Unable to generate sha1 hash value for file : " + file.getName(), e);
+
+                try (FileInputStream fileInputStream = new FileInputStream(file);
+                     DigestInputStream digestInputStream = new DigestInputStream(fileInputStream, digest)
+                ) {
+                    byte[] bytes = new byte[1024];
+                    // read all file content
+                    while (digestInputStream.read(bytes) > 0) ;
+                    byte[] resultByteArr = digest.digest();
+                    // then return
+                    return bytesToHexString(resultByteArr);
+                }
+
+            } catch (NoSuchAlgorithmException | IOException e) {
+                throw new RelocatorException("Unable to generate sha1 hash value for file : " + file.getName(), e);
             }
         }
 
@@ -1156,6 +1179,26 @@ public class DMRelocator {
                 sb.append(Integer.toHexString(value).toUpperCase());
             }
             return sb.toString();
+        }
+    }
+
+    public static class RelocatorException extends RuntimeException {
+
+        static final long serialVersionUID = 3641868074431532124L;
+
+        public RelocatorException() {
+        }
+
+        public RelocatorException(String message) {
+            super(message);
+        }
+
+        public RelocatorException(Throwable cause) {
+            super(cause);
+        }
+
+        public RelocatorException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }

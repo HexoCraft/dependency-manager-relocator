@@ -64,7 +64,8 @@ class DownloaderTest {
         Assertions.assertDoesNotThrow(() -> {
             URL url = new URL("https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.6/gson-2.8.6.jar");
             Artifact artifact = new Artifact("com.google.code.gson", "gson", "2.8.6").url(url);
-            Downloader.download(artifact, null, tmpDir);
+            Downloader downloader = new Downloader(DMRelocator.Relocator(this.getClass()));
+            downloader.download(artifact, null, tmpDir);
 
             Assertions.assertTrue(tmpDir.resolve(artifact.toPath()).toFile().exists());
         });
@@ -75,7 +76,8 @@ class DownloaderTest {
         Assertions.assertDoesNotThrow(() -> {
             URL url = new URL("https://repo1.maven.org/maven2/com/google/code/gson/gson/2.8.6/gson-2.8.6.jar");
             Artifact artifact = new Artifact("com.google.code.gson", "gson", "2.8.6").url(url).sha1("9180733b7df8542621dc12e21e87557e8c99b8cb");
-            Downloader.download(artifact, null, tmpDir);
+            Downloader downloader = new Downloader(DMRelocator.Relocator(this.getClass()));
+            downloader.download(artifact, null, tmpDir);
 
             Assertions.assertTrue(tmpDir.resolve(artifact.toPath()).toFile().exists());
         });
@@ -85,7 +87,8 @@ class DownloaderTest {
     void ArtifactFromRepositoriesRelease() {
         Assertions.assertDoesNotThrow(() -> {
             Artifact artifact = new Artifact("com.google.code.gson", "gson", "2.8.6");
-            Downloader.download(artifact, repositories, tmpDir);
+            Downloader downloader = new Downloader(DMRelocator.Relocator(this.getClass()));
+            downloader.download(artifact, repositories, tmpDir);
 
             Assertions.assertTrue(tmpDir.resolve(artifact.toPath()).toFile().exists());
         });
@@ -96,7 +99,8 @@ class DownloaderTest {
         Assertions.assertDoesNotThrow(() -> {
             Artifact artifact = new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT");
             Repository repository = new Repository(new URL("https://repo.aikar.co/content/groups/aikar")).name("aikar");
-            Downloader.download(artifact, Collections.singletonList(repository), tmpDir);
+            Downloader downloader = new Downloader(DMRelocator.Relocator(this.getClass()));
+            downloader.download(artifact, Collections.singletonList(repository), tmpDir);
 
             Assertions.assertTrue(tmpDir.resolve(artifact.toPath()).toFile().exists());
         });

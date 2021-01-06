@@ -63,7 +63,7 @@ public class Example {
                     .addRelocation(new Relocation("co.aikar", "libs.aikar"))
                     // relocate artifacts
                     .relocate();
-        } catch (IOException e) {
+        } catch (DMRelocator.RelocatorException | IOException e) {
             e.printStackTrace();
         }
 

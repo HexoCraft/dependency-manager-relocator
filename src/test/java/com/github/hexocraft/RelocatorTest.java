@@ -17,9 +17,7 @@ package com.github.hexocraft;
  *    limitations under the License.
  */
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.net.URL;
@@ -32,13 +30,11 @@ class RelocatorTest {
 
     private static final Path cacheDir = Paths.get("target", "relocator", "cache");
     private static final Path libDir = Paths.get("target", "relocator", "libs");
+    private static final String RELOCATION_ROOT = "com.github.hexocraft.libs.";
 
-    @BeforeAll
-    static void init() {
-    }
-
-    @AfterAll
-    static void end() {
+    @Test
+    void Version() {
+        Assertions.assertEquals("1.4", VERSION);
     }
 
     @Test
@@ -49,14 +45,14 @@ class RelocatorTest {
                     .libDir(libDir)
                     .addArtifact(new Artifact("com.google.code.gson", "gson", "2.8.6"))
                     .addArtifact(new Artifact("org.apache.commons", "commons-lang3", "3.11"))
-                    .addRelocation(new Relocation("com.google.gson", "com.github.hexocraft.libs.gson"))
-                    .addRelocation(new Relocation("org.apache.commons.lang3", "com.github.hexocraft.libs.commons-lang3"))
+                    .addRelocation(new Relocation("com.google", RELOCATION_ROOT + "google"))
+                    .addRelocation(new Relocation("org.apache.commons.lang3", RELOCATION_ROOT + "commons-lang3"))
                     .relocate();
 
             Assertions.assertThrows(ClassNotFoundException.class, () -> Class.forName("com.google.gson.Gson"));
             Assertions.assertThrows(ClassNotFoundException.class, () -> Class.forName("org.apache.commons.lang3.ClassUtils"));
-            Assertions.assertDoesNotThrow(() -> Class.forName("com.github.hexocraft.libs.gson.Gson"));
-            Assertions.assertDoesNotThrow(() -> Class.forName("com.github.hexocraft.libs.commons-lang3.ClassUtils"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "google.gson.Gson"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "commons-lang3.ClassUtils"));
         });
     }
 
@@ -71,18 +67,19 @@ class RelocatorTest {
                     // Add artifacts
                     .addArtifact(new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT"))
                     // Add relocations
-                    .addRelocation(new Relocation("co.aikar", "com.github.hexocraft.libs.aikar"))
+                    .addRelocation(new Relocation("co.aikar.commands", RELOCATION_ROOT + "acf"))
+                    .addRelocation(new Relocation("co.aikar.locales", RELOCATION_ROOT + "locales"))
                     // relocate artifacts
                     .relocate();
 
-            Assertions.assertDoesNotThrow(() -> Class.forName("com.github.hexocraft.libs.aikar.commands.Annotations"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.CommandContexts"));
+            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "locales.LocaleManager"));
         });
     }
 
-    //@Test
+    @Test
     void RelocateTest() {
         Assertions.assertDoesNotThrow(() -> {
-            String RELOCATION_ROOT = "com.github.hexocraft.libs.";
             Relocator(RelocatorTest.class.getClassLoader())
                     .cacheDir(cacheDir)
                     .libDir(libDir)
@@ -99,9 +96,9 @@ class RelocatorTest {
                     .addArtifact(new Artifact("org.spongepowered", "configurate-core", "4.0.0"))
                     .addArtifact(new Artifact("org.spongepowered", "configurate-hocon", "4.0.0"))
                     .addArtifact(new Artifact("org.spongepowered", "configurate-yaml", "4.0.0"))
-                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-core", "1.0.0-SNAPSHOT"))
-                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-hocon", "1.0.0-SNAPSHOT"))
-                    .addArtifact(new Artifact("com.github.hexocraft", "configuration-yaml", "1.0.0-SNAPSHOT"))
+                    //.addArtifact(new Artifact("com.github.hexocraft", "configuration-core", "1.0.0-SNAPSHOT"))
+                    //.addArtifact(new Artifact("com.github.hexocraft", "configuration-hocon", "1.0.0-SNAPSHOT"))
+                    //.addArtifact(new Artifact("com.github.hexocraft", "configuration-yaml", "1.0.0-SNAPSHOT"))
                     // --> Annotation Command Framework
                     .addArtifact(new Artifact("co.aikar", "acf-core", "0.5.0-SNAPSHOT"))
                     .addArtifact(new Artifact("co.aikar", "acf-bukkit", "0.5.0-SNAPSHOT"))
@@ -130,9 +127,9 @@ class RelocatorTest {
             Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configurate.hocon.HoconConfigurationLoader"));
             Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configurate.yaml.YamlConfigurationLoader"));
 
-            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.AbstractConfiguration"));
-            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.hocon.HoconConfiguration"));
-            Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.yaml.YamlConfiguration"));
+            //Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.AbstractConfiguration"));
+            //Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.hocon.HoconConfiguration"));
+            //Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "configuration.yaml.YamlConfiguration"));
 
             Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.CommandContexts"));
             Assertions.assertDoesNotThrow(() -> Class.forName(RELOCATION_ROOT + "acf.BukkitCommandContexts"));
