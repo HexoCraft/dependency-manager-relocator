@@ -25,14 +25,14 @@
     <!-- Artifact properties -->
     <groupId>com.github.hexocraft</groupId>
     <artifactId>DependencyManagerRelocator</artifactId>
-    <version>1.4</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
 
     <!-- parent pom -->
     <parent>
         <groupId>com.github.hexocraft</groupId>
         <artifactId>hexocraft-parent</artifactId>
-        <version>9</version>
+        <version>10</version>
     </parent>
 
     <!-- Description -->

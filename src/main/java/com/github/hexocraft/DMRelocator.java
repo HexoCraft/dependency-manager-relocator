@@ -46,7 +46,7 @@ import static java.util.Objects.requireNonNull;
 @SuppressWarnings("unused")
 public class DMRelocator {
 
-    public static final String VERSION = "1.4";
+    public static final String VERSION = "1.5";
 
     // The class loader
     private final ClassLoader classLoader;
