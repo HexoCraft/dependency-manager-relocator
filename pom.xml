@@ -24,7 +24,7 @@
 
     <!-- Artifact properties -->
     <groupId>com.github.hexocraft</groupId>
-    <artifactId>DependencyManagerRelocator</artifactId>
+    <artifactId>dependency-manager-relocator</artifactId>
     <version>1.6</version>
     <packaging>jar</packaging>
 
@@ -38,7 +38,7 @@
     <!-- Description -->
     <name>Dependency Manager Relocator</name>
     <description>Java dependency manager relocator.</description>
-    <url>https://github.com/hexocraft/DependencyManagerRelocator</url>
+    <url>https://github.com/hexocraft/dependency-manager-relocator</url>
 
     <!-- Organization -->
     <organization>
@@ -66,42 +66,20 @@
 
     <!-- Source control manager -->
     <scm>
-        <connection>scm:git:git://github.com/hexocraft/DependencyManagerRelocator.git</connection>
-        <developerConnection>scm:git:ssh://github.com:hexocraft/DependencyManagerRelocator.git</developerConnection>
-        <url>http://github.com/hexocraft/DependencyManagerRelocator</url>
+        <connection>scm:git:git://github.com/hexocraft/dependency-manager-relocator.git</connection>
+        <developerConnection>scm:git:ssh://github.com:hexocraft/dependency-manager-relocator.git</developerConnection>
+        <url>http://github.com/hexocraft/dependency-manager-relocator</url>
     </scm>
 
     <!-- Issue management -->
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/hexocraft/DependencyManagerRelocator/issues</url>
+        <url>https://github.com/hexocraft/dependency-manager-relocator/issues</url>
     </issueManagement>
 
     <!-- Project properties -->
     <properties>
         <inception.year>2020</inception.year>
     </properties>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>${maven-gpg-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals><goal>sign</goal></goals>
-                        <configuration>
-                            <!-- Prevent `gpg` from using pinentry programs -->
-                            <gpgArguments>
-                            </gpgArguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>
